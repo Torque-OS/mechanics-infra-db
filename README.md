@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="Torque-OS" width="220"/>
+</p>
+
 # mechanics-infra-db
 
 Terraform infrastructure for the managed PostgreSQL database (AWS RDS) — part of the [Torque-OS](https://github.com/Torque-OS) Mechanics Software platform.
