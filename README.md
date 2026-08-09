@@ -64,6 +64,7 @@ terraform apply
 |--------|-------------|
 | `db_endpoint` | RDS connection endpoint |
 | `db_port` | PostgreSQL port (5432) |
+| `database_url_secret_arn` | ARN of the Secrets Manager secret holding the full DB connection string |
 
 ## CI/CD
 
