@@ -69,3 +69,13 @@ resource "aws_db_instance" "this" {
     Name = "${var.cluster_name}-rds"
   }
 }
+
+resource "aws_secretsmanager_secret" "database_url" {
+  name        = "${var.cluster_name}/database-url"
+  description = "PostgreSQL connection string for the Mechanics Software API"
+}
+
+resource "aws_secretsmanager_secret_version" "database_url" {
+  secret_id     = aws_secretsmanager_secret.database_url.id
+  secret_string = "Host=${aws_db_instance.this.endpoint};Port=${aws_db_instance.this.port};Database=${aws_db_instance.this.db_name};Username=${aws_db_instance.this.username};Password=${var.db_password}"
+}
