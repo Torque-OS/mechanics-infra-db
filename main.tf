@@ -15,6 +15,23 @@ data "aws_subnets" "private" {
   }
 }
 
+locals {
+  services = {
+    "os-service" = {
+      name     = "os-service"
+      database = "os_service"
+    }
+    "billing-service" = {
+      name     = "billing-service"
+      database = "billing_service"
+    }
+    "execution-service" = {
+      name     = "execution-service"
+      database = "execution_service"
+    }
+  }
+}
+
 resource "aws_db_subnet_group" "this" {
   name       = "${var.cluster_name}-db"
   subnet_ids = data.aws_subnets.private.ids
