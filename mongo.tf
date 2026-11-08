@@ -14,7 +14,7 @@ resource "mongodbatlas_cluster" "service" {
   backing_provider_name       = "AWS"
   provider_region_name        = "US_EAST_1"
   provider_instance_size_name = "M0"
-  mongo_db_major_version      = "7.0"
+  mongo_db_major_version      = "8.0"
 }
 
 resource "mongodbatlas_project_ip_access_list" "service" {
