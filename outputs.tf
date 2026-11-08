@@ -23,3 +23,19 @@ output "database_url_secret_arn" {
   description = "ARN of the Secrets Manager secret holding the full DB connection string"
   value       = aws_secretsmanager_secret.database_url.arn
 }
+
+output "mongo_secret_arns" {
+  description = "ARNs of the per-service MongoDB connection string Secrets"
+  value = {
+    for service, secret in aws_secretsmanager_secret.mongo_url :
+    service => secret.arn
+  }
+}
+
+output "mongo_project_ids" {
+  description = "MongoDB Atlas project IDs by service"
+  value = {
+    for service, project in mongodbatlas_project.service :
+    service => project.id
+  }
+}
