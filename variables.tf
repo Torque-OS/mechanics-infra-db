@@ -39,3 +39,50 @@ variable "db_allocated_storage" {
   type        = number
   default     = 20
 }
+
+variable "atlas_public_key" {
+  description = "MongoDB Atlas programmatic access public key"
+  type        = string
+  sensitive   = true
+}
+
+variable "atlas_private_key" {
+  description = "MongoDB Atlas programmatic access private key"
+  type        = string
+  sensitive   = true
+}
+
+variable "atlas_org_id" {
+  description = "MongoDB Atlas organization ID used to create service projects"
+  type        = string
+}
+
+variable "atlas_project_prefix" {
+  description = "Prefix used for the MongoDB Atlas project names"
+  type        = string
+  default     = "mechanics"
+}
+
+variable "atlas_allowed_cidrs" {
+  description = "NAT egress CIDRs allowed to reach Atlas; do not use 0.0.0.0/0"
+  type        = set(string)
+
+  validation {
+    condition     = length(var.atlas_allowed_cidrs) > 0 && !contains(var.atlas_allowed_cidrs, "0.0.0.0/0")
+    error_message = "Provide at least one restricted Atlas CIDR and never allow 0.0.0.0/0."
+  }
+}
+
+variable "mongo_passwords" {
+  description = "Password for each service MongoDB user"
+  type        = map(string)
+  sensitive   = true
+
+  validation {
+    condition = alltrue([
+      for service in ["os-service", "billing-service", "execution-service"] :
+      contains(keys(var.mongo_passwords), service) && length(var.mongo_passwords[service]) >= 16
+    ])
+    error_message = "mongo_passwords must contain os-service, billing-service and execution-service passwords of at least 16 characters."
+  }
+}

@@ -4,7 +4,7 @@
 
 # mechanics-infra-db
 
-Terraform module that provisions the managed PostgreSQL database (**AWS RDS PostgreSQL 16**) for the Torque-OS Mechanics Software platform.
+Terraform module that provisions the managed PostgreSQL database (**AWS RDS PostgreSQL 16**) and one isolated MongoDB Atlas M0 database per service for the Torque-OS Mechanics Software platform.
 
 > **Part of the [Torque-OS](https://github.com/Torque-OS) platform** — see [how repos link together](#platform-overview) below.
 
@@ -46,6 +46,8 @@ Internet
 - Creates a **DB Subnet Group** spanning the three private subnets.
 - Creates a **Security Group** that allows port 5432 only from within the VPC CIDR (`10.0.0.0/16`) — the database is never exposed to the internet.
 - Reads the VPC and subnets from the state created by `mechanics-infra-k8s` via tag lookup (no shared Terraform state required).
+- Creates one MongoDB Atlas M0 cluster, project, database user and AWS Secrets Manager secret per service (`os-service`, `billing-service`, `execution-service`).
+- Restricts Atlas access to the explicitly configured NAT egress CIDRs; `0.0.0.0/0` is rejected.
 
 ---
 
@@ -120,6 +122,16 @@ terraform init
 terraform plan -var="db_password=YourSuperSecretPassword123!"
 ```
 
+Atlas variables are also required. For local use, export them as `TF_VAR_*` variables:
+
+```powershell
+$env:TF_VAR_atlas_public_key = "..."
+$env:TF_VAR_atlas_private_key = "..."
+$env:TF_VAR_atlas_org_id = "..."
+$env:TF_VAR_atlas_allowed_cidrs = "[`"203.0.113.10/32`"]"
+$env:TF_VAR_mongo_passwords = '{"os-service":"...","billing-service":"...","execution-service":"..."}'
+```
+
 Review the plan. It should create:
 - `aws_db_subnet_group.this`
 - `aws_security_group.rds`
@@ -182,6 +194,12 @@ Or set `DATABASE_URL` in the GitHub secrets of `mechanics-software` and let the 
 | `db_password` | Master password | — | **Yes** |
 | `db_instance_class` | RDS instance type | `db.t3.micro` | No |
 | `db_allocated_storage` | Disk size in GB | `20` | No |
+| `atlas_public_key` | MongoDB Atlas API public key | — | **Yes** |
+| `atlas_private_key` | MongoDB Atlas API private key | — | **Yes** |
+| `atlas_org_id` | MongoDB Atlas organization ID | — | **Yes** |
+| `atlas_project_prefix` | Prefix for service projects | `mechanics` | No |
+| `atlas_allowed_cidrs` | Restricted NAT egress CIDRs allowed by Atlas | — | **Yes** |
+| `mongo_passwords` | JSON map keyed by service name, with 16+ character password per service | — | **Yes** |
 
 Never commit `db_password` to version control. Pass it via:
 
@@ -204,6 +222,8 @@ terraform apply
 | `db_port` | `5432` |
 | `db_name` | Database name |
 | `connection_string` | Partial connection string without password (sensitive — use `terraform output -raw connection_string`) |
+| `mongo_secret_arns` | AWS Secrets Manager ARNs for each service MongoDB URL |
+| `mongo_project_ids` | MongoDB Atlas project IDs for each service |
 
 ---
 
@@ -224,6 +244,11 @@ GitHub Actions pipeline (`.github/workflows/ci-cd.yml`):
 | `AWS_SECRET_ACCESS_KEY` | AWS Academy secret |
 | `AWS_SESSION_TOKEN` | AWS Academy session token (rotate each lab session) |
 | `DB_PASSWORD` | Master database password |
+| `ATLAS_PUBLIC_KEY` | MongoDB Atlas API public key |
+| `ATLAS_PRIVATE_KEY` | MongoDB Atlas API private key |
+| `ATLAS_ORG_ID` | MongoDB Atlas organization ID |
+| `ATLAS_ALLOWED_CIDRS` | JSON array of restricted NAT egress CIDRs |
+| `MONGO_PASSWORDS` | JSON object with `os-service`, `billing-service` and `execution-service` passwords |
 
 ### Setting secrets
 
@@ -232,6 +257,11 @@ gh secret set AWS_ACCESS_KEY_ID     --repo Torque-OS/mechanics-infra-db
 gh secret set AWS_SECRET_ACCESS_KEY --repo Torque-OS/mechanics-infra-db
 gh secret set AWS_SESSION_TOKEN     --repo Torque-OS/mechanics-infra-db
 gh secret set DB_PASSWORD           --repo Torque-OS/mechanics-infra-db
+gh secret set ATLAS_PUBLIC_KEY      --repo Torque-OS/mechanics-infra-db
+gh secret set ATLAS_PRIVATE_KEY     --repo Torque-OS/mechanics-infra-db
+gh secret set ATLAS_ORG_ID          --repo Torque-OS/mechanics-infra-db
+gh secret set ATLAS_ALLOWED_CIDRS   --repo Torque-OS/mechanics-infra-db
+gh secret set MONGO_PASSWORDS       --repo Torque-OS/mechanics-infra-db
 ```
 
 ---

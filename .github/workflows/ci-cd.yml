@@ -8,6 +8,11 @@ on:
 
 env:
   AWS_REGION: us-east-1
+  TF_VAR_atlas_public_key: ${{ secrets.ATLAS_PUBLIC_KEY }}
+  TF_VAR_atlas_private_key: ${{ secrets.ATLAS_PRIVATE_KEY }}
+  TF_VAR_atlas_org_id: ${{ secrets.ATLAS_ORG_ID }}
+  TF_VAR_atlas_allowed_cidrs: ${{ secrets.ATLAS_ALLOWED_CIDRS }}
+  TF_VAR_mongo_passwords: ${{ secrets.MONGO_PASSWORDS }}
 
 jobs:
   validate:
