@@ -64,7 +64,7 @@ resource "aws_secretsmanager_secret_version" "mongo_url" {
     ":",
     urlencode(var.mongo_passwords[each.key]),
     "@",
-    mongodbatlas_cluster.service[each.key].srv_address,
+    trimprefix(mongodbatlas_cluster.service[each.key].srv_address, "mongodb+srv://"),
     "/",
     each.value.database,
     "?retryWrites=true&w=majority",
